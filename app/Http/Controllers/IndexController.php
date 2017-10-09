@@ -1,20 +1,60 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Session;
 class IndexController extends Controller
 {
 	//首页
 	public function index()
 	{
-		$data='fxs';
-		return view('index.index',['name'=>$data]);
+		
+		
+		$res = DB::select("select * from huya_anchor");
+		$user = array();
+		foreach ($res as $key => $v) {
+			$user[] = $v['user_id'];
+		}
+		$user_info = implode(',',$user);
+		$users = DB::select("select user_id from huya_user where user_status = 1 and user_id in ($user_info)");
+		$res = DB::select("select info_nickname,info_desc from huya_userinfo");
+		$ress = DB::select("select info_nickname from huya_userinfo limit 3");
+		//展示热门分类
+		$type = DB::select("select anchor_type from huya_anchor ");
+		$types = array();
+		foreach ($type as $key => $v) {
+			$types[] = $v['anchor_type'];
+		}
+		$ok = $this->test($types);
+		$username=Session::get('user');
+		if (!empty($username)) {
+			$er=array('error'=>1);
+		}else{
+			$er=array('error'=>0);
+		}
+		//根据id查询分类表
+		$hottype = DB::select("select type_name,type_id from huya_type where type_id in ($ok)");
+		$hottypes = DB::select("select type_name,type_id from huya_type where type_id in ($ok) limit 3");
+		return view('index.index',['res'=>$res,'ress'=>$ress,'hottype'=>$hottype,'hottypes'=>$hottypes,'er'=>$er]);
+		//return view('index.index',['name'=>$data]);
+	}
+	public function test($data)
+	{
+		$type_id = implode(",",$data);
+		return $type_id;
 	}
 	//直播
 	public function show(){
 		$rs=DB::select("select * from huya_type where type_status=:status",['status'=>1]);
 		$data=$this->cate($rs);
 		$live=$this->live();
-		return view("index.show",['data'=>$data,'live'=>$live]);
+		$username=Session::get('user');
+		if (!empty($username)) {
+			$er=array('error'=>1);
+		}else{
+			$er=array('error'=>0);
+		}
+		return view("index.show",['data'=>$data,'live'=>$live,'er'=>$er]);
 	}
 	//直播房间列表
 	public function live(){
@@ -51,7 +91,13 @@ class IndexController extends Controller
 		$rs=DB::select("select * from huya_type where type_status=:status",['status'=>1]);
 		$data=$this->cate($rs);
 		$res=DB::select("select * from huya_type where parent_id>:pid",['pid'=>0]);
-		return view('index.category',['data'=>$data,'cate'=>$res]);
+		$username=Session::get('user');
+		if (!empty($username)) {
+			$er=array('error'=>1);
+		}else{
+			$er=array('error'=>0);
+		}
+		return view('index.category',['data'=>$data,'cate'=>$res,'er'=>$er]);
 	}
 	//登录
 	public function login(){
@@ -61,6 +107,7 @@ class IndexController extends Controller
 	public function register(){
 		return view('index.register');
 	}
+	//登陆
 	public function login_do(){
 		//账号
 		$user=$_GET['email'];
@@ -71,7 +118,7 @@ class IndexController extends Controller
 		//验证手机号
 		$phone=DB::table('user')->where([['user_phone',$user],['user_pwd',$user_pwd]])->first();
 		$flag=1;
-		
+		$user_name=null;
 		if (empty($phone)) {
 			//验证邮箱
 			$email=DB::table('user')->where([['user_email',$user],['user_pwd',$user_pwd]])->first();
@@ -80,10 +127,16 @@ class IndexController extends Controller
 				$yy=DB::table('user')->where([['user_yy',$user],['user_pwd',$user_pwd]])->first();
 				if (!$yy['user_name']) {
 						$flag=0;
+				}else{
+					$user_name=$yy;
 				}
+			}else{
+				$user_name=$email;
 			}
+		}else{
+			$user_name=$phone;
 		}
-
+		Session::put('user',$user_name);
 		return $flag;
 	}
 	public function regin(){
@@ -115,5 +168,14 @@ class IndexController extends Controller
 			}
 		}
 		return array('error'=>$error,'msg'=>$msg);
+	}
+
+	//退出登陆
+	public function logout(){
+        Session::flush();
+        $rs=Session::get('user');
+        if (empty($rs)) {
+        	return 1;
+        }
 	}
 }

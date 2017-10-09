@@ -73,7 +73,7 @@
 
             <div class="duya-header-nav">
 
-                <span class="hy-nav-link"><a href="{{URL::asset('index/index')}}" class="hy-nav-title clickstat" eid="click/navi/home" eid_desc="点击/导航/首页">首页</a></span>
+                <span class="hy-nav-link"><a href="<?=url('/index')?>" class="hy-nav-title clickstat" eid="click/navi/home" eid_desc="点击/导航/首页">首页</a></span>
 
                 <span class="hy-nav-link duya-header-on"><a href="{{URL::asset('index/show')}}" class="hy-nav-title hiido_stat clickstat"  hiido_code="10004221" eid="click/navi/zhibo" eid_desc="点击/导航/直播">直播</a></span>
 
@@ -108,11 +108,7 @@
             <div class="duya-header-gg clickstat" id="J_duyaHdGg" eid="click/push/navipic" eid_desc="点击/推荐/顶部导航图片"></div>
 
             <div class="duya-header-control clearfix">
-                <div class="hy-nav-right">
-                    <a class="hy-nav-title clickstat" href="<?=url('/login')?>" target="_blank"><span class="title">登录|注册</span></a>
-
-                </div>
-
+                
                 <div class="hy-nav-right hy-nav-kaibo">
 
                     <a class="hy-nav-title clickstat" href="http://www.huya.com/e/zhubo" eid="click/navi/kaibo" eid_desc="点击/导航/开播" target="_blank">
@@ -254,8 +250,8 @@
                     </div>
 
                 </div>
-
-                <div class="hy-nav-right un-login">
+                @if($er['error']==0)
+                <div class="hy-nav-right un-login" style="display: block;">
 
                     <div class="hy-nav-title">
 
@@ -263,19 +259,19 @@
 
                         <div class="un-login-btn">
 
-                            <a class="clickstat" id="nav-login" href="#" eid="click/navi/sign" eid_desc="点击/导航/登录">登录</a>
+                            <a  href="<?=url('/login')?>" eid="click/navi/sign" eid_desc="点击/导航/登录">登录</a>
 
                             <i>|</i>
 
-                            <a class="clickstat" id="nav-regiest" href="#" eid="click/navi/login" eid_desc="点击/导航/注册">注册</a>
+                            <a  href="<?=url('/register')?>" eid="click/navi/login" eid_desc="点击/导航/注册">注册</a>
 
                         </div>
 
                     </div>
 
                 </div>
-
-                <div class="hy-nav-right nav-user success-login">
+                @else
+                <div class="hy-nav-right nav-user success-login" style="display: block;">
 
                     <a class="nav-user-title" href="http://i.huya.com/" target="_blank">
 
@@ -292,8 +288,9 @@
                         <i class="arrow"></i>
 
                         <div class="tt-user-card">
+                        <span style="display:none"><?php $user=Session::get('user')?></span>
 
-                            <a class="btn-exit" id="nav-loggout" href="#"><i class="hy-nav-exit-icon"></i><span>退出</span></a>
+                            <a class="btn-exit" href="#"><i class="hy-nav-exit-icon"></i><span id="logout">退出</span></a>
 
                             <div class="u-info">
 
@@ -303,7 +300,7 @@
 
                                 </a>
 
-                                <p class="nick" id="J_huyaNavUserCardNick">...</p>
+                                <p class="nick" id="J_huyaNavUserCardNick">{{$user['user_name']}}</p>
 
                                 <p class="user-sign" id="J_huyaNavUserCardSign">...</p>
 
@@ -426,6 +423,7 @@
                 </div>
 
             </div>
+            @endif
 
             <div class="duya-header-tips">
 
@@ -571,11 +569,16 @@ var UDB_SDK_SWTICH = true;
 
             <div class="sidebar-show-nav">
 
-                <a href="http://i.huya.com/index.php?m=Subscribe" class="clickstat sidebar-show-line js-sub" target="_blank" eid="click/navi/zuoce/sub" eid_desc="点击/导航/左侧导航/我的订阅"><i class="sidebar-icon-sub"></i>我的订阅<span class="subscribe-text"> (请登录)</span></a>
+                <a href="http://i.huya.com/index.php?m=Subscribe" target="_blank" eid="click/navi/zuoce/sub" eid_desc="点击/导航/左侧导航/我的订阅"><i class="sidebar-icon-sub"></i>我的订阅
+                @if($er['error']==0)
+                <span class="subscribe-text"> (请登录)</span>
+                @else
+                @endif
+                </a>
 
-                <a href="http://www.huya.com/l" class="clickstat sidebar-show-line" eid="click/navi/zuoce/live" eid_desc="点击/导航/左侧导航/全部直播"><i class="sidebar-icon-live"></i> 全部直播</a>
+                <a href="" eid="click/navi/zuoce/live" eid_desc="点击/导航/左侧导航/全部直播"><i class="sidebar-icon-live"></i> 全部直播</a>
 
-                <a href="http://www.huya.com/g" class="clickstat sidebar-show-line" eid="click/navi/zuoce/gametype" eid_desc="点击/导航/左侧导航/全部游戏"><i class="sidebar-icon-type"></i>全部分类</a>
+                <a href="category" eid="click/navi/zuoce/gametype" eid_desc="点击/导航/左侧导航/全部游戏"><i class="sidebar-icon-type"></i>全部分类</a>
 
             </div>
 
@@ -780,6 +783,23 @@ var _hmt = _hmt || [];
   s.parentNode.insertBefore(hm, s);
 
 })();
+
+</script>
+<script>
+    $(function(){
+        $("#logout").click(function(){
+            $.ajax({
+                type:'get',
+                url:'logout',
+                success:function(o){
+                    if (o==1) {
+                        alert("退出成功");
+                        location.href='index';
+                    }
+                }
+            })
+        })
+    })
 
 </script>
 
